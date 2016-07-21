@@ -1,16 +1,37 @@
 var superagent = require('superagent');
 var express = require('express');
 var cheerio = require('cheerio');
-var app = express();
+var bodyParser = require('body-parser');
+
 var fs = require("fs");
 
-app.get('/', function(req, res){
-  var urls =  fs.readFileSync('urllist').toString().split("\n");
+var app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded());
+var router = express.Router();
+
+
+app.get('/', router);
+app.post('/showdetail', router);
+
+router.get('/', function(req, res){
+  var htmlCode =  fs.readFileSync('input').toString();
+  res.send(htmlCode);
+});
+
+
+router.post('/showdetail', function(req, res){
+  var urls = req.body.urls.split("\n");
+  console.log(urls);
+
   var content = "";
-  urls.length = urls.length - 1;
   var count = urls.length;
 
   console.log("视频总数:" + count);
+  if (count == 0) {
+    res.send("无有效 URL");
+    return
+  }
   for (var index in urls) {
     var url = urls[index];
     if (url.length == 0 ) {
@@ -46,11 +67,11 @@ app.get('/', function(req, res){
           console.log("完成");
           res.send(content);
         }
-
       });
   }
 
 });
+
 
 app.listen(3000, function () {
   console.log('app is listening at port 3000');
