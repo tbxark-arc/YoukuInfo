@@ -24,7 +24,7 @@ router.get('/', function(req, res){
 
 router.post('/showdetail', function(req, res){
   var urls = req.body.urls.split("\n");
-
+  var userAgent = "Mozilla/5.0 (iPad; CPU OS 10_0 like Mac OS X) AppleWebKit/602.1.38 (KHTML, like Gecko) Version/10.0 Mobile/14A300 Safari/602.1"
   var content = "";
   var count = urls.length;
 
@@ -34,7 +34,12 @@ router.post('/showdetail', function(req, res){
   for (var index in urls) {
     var url = urls[index];
     if (url.length > 0 && url.indexOf("http://v.youku.com") >= 0) {
+
+        // http://v.youku.com/v_show/id_XMTc0MzMxMzU5Mg==.html?from=s1.8-1-1.1&spm=a2h0k.8191407.0.0&x=1
+        // superagent.
+        var id = url.split("id_")[1].split(".html")[0];
         superagent.get(url)
+          .set("User-Agent", userAgent)
           .end(function (err, sres) {
             count = count - 1;
             if (err) {
@@ -43,27 +48,33 @@ router.post('/showdetail', function(req, res){
               }
               return ;
             }
+
             var $ = cheerio.load(sres.text);
 
-            var irAlbumName = $('meta[name="irAlbumName"]').attr('content');
-            var irTitle = $('meta[name="irTitle"]').attr('content');
-            var keywords =  $('meta[name="keywords"]').attr('content');
-            var videoCode = $('input[id="link4"]').attr('value');
-            var image = $('a[id="s_qq_haoyou1"]').attr('href').split("pics=")[1].split("&")[0].replace("5420", "5410");
+
+            var titleRegx = new RegExp("<title>[^<]+</title>")
+            var rs = titleRegx.exec(sres.text);
+            var irTitle = rs[0].replace("<title>", "").replace("</title>", "");
+            // var keywords =  $('meta[name="keywords"]').attr('content');
+            var videoCode = "<iframe height=498 width=510 src=\'http://player.youku.com/embed/" + id + "\' frameborder=0 \'allowfullscreen\'></iframe>";
+            var image = $('#share-qq').attr('href').split('imageUrl=')[1].split('&')[0].replace("05420", "05410");
+
+            //
+
 
             var jsonObj = {
               url: url,
-              title: irAlbumName + irTitle,
-              keywords: keywords,
+              title: irTitle,
               videoCode: videoCode,
               image: image
             };
 
 
-            var subContent =  "标题:" + "<br>" + irAlbumName + irTitle + "<br>" + "<br>";
-            subContent = subContent + "关键词:" + "<br>" + keywords + "<br>" + "<br>";
+            //<iframe height=498 width=510 src='http://player.youku.com/embed/XMTcyODQ4MTAyOA==' frameborder=0 'allowfullscreen'></iframe>
+
+            var subContent =  "标题:" + "<br>"  + irTitle + "<br>" + "<br>";
             subContent = subContent + "缩略图:" + "<br>" + "<img src='"+image+"' />" + "<br>" + "<br>";
-            subContent = subContent + "通用代码:" + "<br>" + "<input style='width:100%' value=\'" + videoCode  + "\'</input>" + "<br>" +"<br>" + "<br>" + "<br>";;
+            subContent = subContent + "通用代码:" + "<br>" + "<input id='videoCode' style='width:100%' value=\"" +  videoCode + "\"</input>" + "<br>" +"<br>" + "<br>" + "<br>";
 
             content = content + subContent;
 
