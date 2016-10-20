@@ -68,7 +68,7 @@ router.post('/showdetail', function(req, res){
                     url: realUrl,
                     title: respone.data.video.title,
                     videoCode: videoCode,
-                    image: respone.data.video.logo
+                    image: respone.data.video.logo.replace("r1", "r3")
                   };
 
                   var subContent =  "标题:" + "<br>"  + jsonObj.title + "<a href='" + jsonObj.url + "'>" + "[跳转网页]  " + "<a>"  + "<br>" + "<br>";
