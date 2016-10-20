@@ -199,13 +199,22 @@ router.post('/videoJson', function(req, res){
                 var realUrl = "http://v.youku.com/v_show/id_" + respone.data.video.encodeid + ".html";
                 var videoCode = "<iframe height=498 width=510 src=\'http://player.youku.com/embed/" + respone.data.video.encodeid + "\' frameborder=0 \'allowfullscreen\'></iframe>";
 
+                var authId = "";
+                var irTitle = respone.data.video.title;
+                if (irTitle.indexOf("刘哥") > 0) {
+                    authId = "56c04b8518000021009d3766";
+                } else if (irTitle.indexOf("评头论足") > 0) {
+                    authId = "5743fa2c1700003d00e61f87";
+                }
+
                 var jsonObj = {
                   success: true,
                   data: {
                     url: realUrl,
                     title: respone.data.video.title,
                     videoCode: videoCode,
-                    image: respone.data.video.logo.replace("r1", "r3")
+                    image: respone.data.video.logo.replace("r1", "r3"),
+                    authId: authId
                   }
                 };
 
@@ -255,6 +264,12 @@ router.post('/videoJson', function(req, res){
             }
 
             var realUrl = "http://v.youku.com/v_show/id_" + videoId + ".html";
+            var authId = "";
+            if (irTitle.indexOf("刘哥") > 0) {
+                authId = "56c04b8518000021009d3766";
+            } else if (irTitle.indexOf("评头论足") > 0) {
+                authId = "5743fa2c1700003d00e61f87";
+            }
 
             var jsonObj = {
               success: true,
@@ -262,7 +277,8 @@ router.post('/videoJson', function(req, res){
                 url: url,
                 title: irTitle,
                 videoCode: videoCode,
-                image: image
+                image: image,
+                authId: authId
               }
             };
 
