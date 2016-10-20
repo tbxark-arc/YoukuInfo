@@ -77,7 +77,7 @@ router.post('/showdetail', function(req, res){
 
                   content = content + subContent;
 
-                  console.log( JSON.stringify(jsonObj, null, "\t") + "\n");
+                  console.log("方案1" + JSON.stringify(jsonObj, null, "\t") + "\n");
 
                   count = count - 1;
                   if (count == 0) {
@@ -142,7 +142,7 @@ router.post('/showdetail', function(req, res){
 
               content = content + subContent;
 
-              console.log( JSON.stringify(jsonObj, null, "\t") + "\n");
+              console.log( "方案2" + JSON.stringify(jsonObj, null, "\t") + "\n");
 
             } catch (e) {
               console.log(e);
@@ -205,11 +205,11 @@ router.post('/videoJson', function(req, res){
                     url: realUrl,
                     title: respone.data.video.title,
                     videoCode: videoCode,
-                    image: respone.data.video.logo
+                    image: respone.data.video.logo.replace("r1", "r3")
                   }
                 };
 
-                console.log( JSON.stringify(jsonObj, null, "\t") + "\n");
+                console.log("方案1" + JSON.stringify(jsonObj, null, "\t") + "\n");
                 res.send(JSON.stringify(jsonObj, null, "") + "\n");
               });
               return;
@@ -266,7 +266,7 @@ router.post('/videoJson', function(req, res){
               }
             };
 
-            console.log( JSON.stringify(jsonObj, null, "\t") + "\n");
+            console.log("方案2" + JSON.stringify(jsonObj, null, "\t") + "\n");
             res.send(JSON.stringify(jsonObj, null, "") + "\n");
           } catch (e) {
             res.send({
