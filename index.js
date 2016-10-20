@@ -21,30 +21,29 @@ router.get('/', function(req, res){
 
 router.post('/showdetail', function(req, res){
   var urls = req.body.urls.split("\n");
+  var didSetRes = false;
   try {
     buildJsonArrayByUrlArray(urls, function(jsons) {
         var content = "";
-        var tables = Array();
-        for (var index in jsons) {
-          var json = jsons[index];
-          if (json != null) {
-            var i = urls.indexOf(json.source)
-            tables[i] = buildHTMLByJson(json);
-          }
-        }
         var total = urls.length;
         for (var i = 0; i < total; i++) {
-          if (tables[i] != null) {
-            content = content + tables[i];
+          var json = jsons[i];
+          if (json != null) {
+            content = content + buildHTMLByJson(json);
           }
         }
         var header = fs.readFileSync('output').toString();
         var html = "<html>" + header + "<body>" + content + "</body>" + "</html>";
+        result = html;
+        didSetRes = true;
         res.send(html);
     });
   } catch(e) {
-    res.send(e);
+    if (!didSetRes) {
+      res.send(e);
+    }
   } finally {
+    // (result);
   }
 });
 
@@ -57,12 +56,12 @@ router.post('/videoJson', function(req, res){
 });
 
 function buildHTMLByJson(json) {
+  function tableRow(key, value) {
+    return "<tr>" + "<td width='100px'><div class='data'>" + key + "</div></td>" +  "<td><div class='data'>" + value + "</div></td>" + "</tr>";
+  }
   if (json.success && json.data != null) {
     var subContent = "<table class='table'>\n";
-    function tableRow(key, value) {
-      return "<tr>" + "<td width='100px'><div class='data'>" + key + "</div></td>" +  "<td><div class='data'>" + value + "</div></td>" + "</tr>";
-    }
-    var title = json.data.title + "<span >&nbsp; &nbsp; &nbsp;</span> <a href='" + json.data.url + "'>" + "[跳转网页]  " + "<a>";
+    var title = json.data.title + "<span >&nbsp; &nbsp; &nbsp;</span> <a href='" + json.data.url + "'>" + "[跳转网页]  " + "</a>";
     subContent = subContent + tableRow("标题", title);
     var image =  "<img src='"+json.data.image+"' />";
     subContent = subContent + tableRow("缩略图", image);
@@ -70,13 +69,13 @@ function buildHTMLByJson(json) {
     subContent = subContent + tableRow("通用代码", video);
     var auth = "<input id='authId' style='width:100%;height:30px;' value=\"" +  json.data.authId + "\"</input>";
     subContent = subContent + tableRow("作者" + json.data.authName, auth);
-
     subContent = subContent + "\n</table><br><br>";
 
     return subContent;
   } else {
     var subContent = "<table class='table'>\n";
-    subContent = subContent + tableRow("失败", json.reason);
+    var error = json.reason + "<span >&nbsp; &nbsp; &nbsp;</span> <a href='" + json.source + "'>" + "[跳转网页]  " + "</a>";
+    subContent = subContent + tableRow("失败", error);
     subContent = subContent + "\n</table><br><br>";
     return subContent;
   }
@@ -84,35 +83,39 @@ function buildHTMLByJson(json) {
 }
 
 function buildJsonArrayByUrlArray(urls, callback) {
-  var jsons = Array();
+
+  var jsons = new Object();
   var length = urls.length;
+  var progress = 0;
   for (var index in urls) {
     var url = urls[index];
     if (url.length == 0) {
-      length = length - 1;
+      progress = progress + 1;
       continue;
     }
-    fetchJsonByUrl(url, function(jsonObj) {
-        jsons[jsons.length] = jsonObj;
-        if (jsons.length == length) {
+    fetchJsonByUrl(url, index, function(jsonObj, i) {
+        jsons[i] = jsonObj;
+        progress = progress + 1;
+        if (progress == length) {
             callback(jsons);
         }
     });
   }
 }
 
-function fetchJsonByUrl(url, callback) {
+function fetchJsonByUrl(url, i, callback) {
   var userAgent = "Paw/2.3.1 (Macintosh; OS X/10.12.0) GCDHTTPRequest";
   var urlCache = url;
+  var index = i;
   if (url == null || url.indexOf("http://v.youku.com") < 0) {
-      callback({ success: false, source: urlCache, reason: "Invail url:" + url});
+      callback({ success: false, source: urlCache, reason: "Invail url:" + url}, index);
       return;
   }
   superagent.get(url)
     .set("User-Agent", userAgent)
     .end(function (err, sres) {
       if (err) {
-        callback({ success: false, source: urlCache, reason: err });
+        callback({ success: false, source: urlCache, reason: err }, index);
         return ;
       }
 
@@ -125,7 +128,7 @@ function fetchJsonByUrl(url, callback) {
           superagent.get(jsonURL)
             .end(function(err, sres) {
               if (err) {
-                callback({ success: false, source: urlCache, reason: err });
+                callback({ success: false, source: urlCache, reason: err }, index);
                 return;
               }
               var respone = JSON.parse(sres.text);
@@ -155,9 +158,7 @@ function fetchJsonByUrl(url, callback) {
                   authName:  authName
                 }
               };
-
-              // console.log("方案1" + JSON.stringify(jsonObj, null, "\t") + "\n");
-              callback(jsonObj);
+              callback(jsonObj, index);
             });
             return;
       } else {
@@ -186,16 +187,12 @@ function fetchJsonByUrl(url, callback) {
           var image = "";
           if ($('#s_qq_haoyou1').attr('href') != null) {
             var data = $('#s_qq_haoyou1').attr('href').split('imageUrl=');
-            console.log("s_qq_haoyou1");
             if (data != null && data.length > 0 ){
-              console.log(data[1]);
               image = $('#s_qq_haoyou1').attr('href').split('imageUrl=')[1].split('&')[0].replace("05420", "05410").replace("r1", "r4");
             }
           } else if ($('#share-qq').attr('href') != null) {
-            console.log("share-qq");
             var data = $('#share-qq').attr('href').split('pics=');
             if (data != null && data.length > 0 ){
-              console.log(data);
               image = data[1].split('&')[0].replace("05420", "05410").replace("r1", "r4");
             }
           }
@@ -223,10 +220,9 @@ function fetchJsonByUrl(url, callback) {
               authName: authName
             }
           };
-          // console.log("方案2" + JSON.stringify(jsonObj, null, "\t") + "\n");
-          callback(jsonObj);
+          callback(jsonObj, index);
         } catch (e) {
-          callback({ success: false, source: urlCache, reason: err });
+          callback({ success: false, source: urlCache, reason: err }, index);
         } finally {
         }
       }
