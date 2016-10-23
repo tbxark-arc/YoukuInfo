@@ -64,28 +64,32 @@ function buildHTMLByJson(json, id) {
     return "<tr>" + "<td width='100px'><div class='data'>" + key + "</div></td>" +  "<td><div class='data'>" + value + "</div></td>" + "</tr>";
   }
   if (json.success && json.data != null) {
-    var subContent = "<table class='table'>\n";
+    var tableId = "table" + id ;
+    var subContent = "<table class='table' id='" + tableId + "'>\n";
     var titleId =   "title" + id;
-    var title = "<input id='" + titleId + "' style='width:80%;height:30px;' value=\"" +  json.data.title + "\"</input>";
+    var title = "<input id='" + titleId + "' class='sinput' value=\"" +  json.data.title + "\"</input>";
     var openJs = "window.open(\"" + json.data.url +"\")";
     title = title + "<span >&nbsp; &nbsp; &nbsp;</span><button onclick='"+ openJs + "'> 跳转网页 </button>";
     title = title + "<button class='btn' data-clipboard-target='#" + titleId + "'>复制</button>";
     subContent = subContent + tableRow("标题", title);
 
     var videoId = "videoCode" + id;
-    var video = "<input id='" + videoId + "' style='width:90%;height:30px;' value=\"" +  json.data.videoCode + "\"</input>";
+    var video = "<input id='" + videoId + "' class='liput' value=\"" +  json.data.videoCode + "\"</input>";
     video = video + "<span >&nbsp; &nbsp; &nbsp;</span><button class='btn' data-clipboard-target='#" + videoId + "'>复制</button>";
     subContent = subContent + tableRow("通用代码", video);
 
     var authId = "authId" + id;
-    var auth = "<input id='" + authId + "' style='width:90%;height:30px;' value=\"" +  json.data.authId + "\"</input>";
+    var auth = "<input id='" + authId + "' class='liput' value=\"" +  json.data.authId + "\"</input>";
     auth = auth + "<span >&nbsp; &nbsp; &nbsp;</span><button class='btn' data-clipboard-target='#" + authId + "'>复制</button>";
 
     subContent = subContent + tableRow("作者" + json.data.authName, auth);
 
     var image =  "<img src='"+json.data.image+"' />";
     var saveJs = "window.downloadFile(\"" +  json.data.image + "\")";
+    var closeJs = "document.getElementById(\"" + tableId +  "\").hidden = true;"
     image = image + "<span >&nbsp; &nbsp; &nbsp;</span><button onclick='"+ saveJs + "'> 下载</button>";
+    image = image + "<span >&nbsp; &nbsp; &nbsp;</span><button onclick='"+ closeJs + "'> 关闭</button>";
+
     subContent = subContent + tableRow("缩略图", image);
 
     subContent = subContent + "\n</table><br><br>";
