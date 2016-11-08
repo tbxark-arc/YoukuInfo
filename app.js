@@ -22,6 +22,8 @@ router.get('/', function(req, res){
   res.send(htmlCode);
 });
 
+
+
 router.post('/showdetail', function(req, res){
   var urls = req.body.urls.split("\n");
   var didSetRes = false;
@@ -73,6 +75,9 @@ function buildHTMLByJson(json, id) {
     title = title + "<button class='btn' data-clipboard-target='#" + titleId + "'>复制</button>";
     subContent = subContent + tableRow("标题", title);
 
+    var keywords = "<input class='liput' value=\"" +  json.data.keywords + "\"</input>";
+    subContent = subContent + tableRow("关键词", keywords);
+
     var videoId = "videoCode" + id;
     var video = "<input id='" + videoId + "' class='liput' value=\"" +  json.data.videoCode + "\"</input>";
     video = video + "<span >&nbsp; &nbsp; &nbsp;</span><button class='btn' data-clipboard-target='#" + videoId + "'>复制</button>";
@@ -82,7 +87,7 @@ function buildHTMLByJson(json, id) {
     var auth = "<input id='" + authId + "' class='liput' value=\"" +  json.data.authId + "\"</input>";
     auth = auth + "<span >&nbsp; &nbsp; &nbsp;</span><button class='btn' data-clipboard-target='#" + authId + "'>复制</button>";
 
-    subContent = subContent + tableRow("作者" + json.data.authName, auth);
+    subContent = subContent + tableRow(json.data.authName, auth);
 
     var image =  "<img src='"+json.data.image+"' />";
     var saveJs = "window.downloadFile(\"" +  json.data.image + "\")";
@@ -127,6 +132,27 @@ function buildJsonArrayByUrlArray(urls, callback) {
   }
 }
 
+
+function getAuthId(title) {
+  if (title.indexOf("刘哥") > 0) {
+      var id = "56c04b8518000021009d3766";
+      var name = "刘哥";
+      return {id:id, name: name};
+  } else if (title.indexOf("评头论足") > 0) {
+      var id = "5743fa2c1700003d00e61f87";
+      var name = "谢双超";
+      return {id:id, name: name};
+  } else if (title.indexOf("虾米") > 0 ) {
+      var id = "582052a11d00000f00d6ec17";
+      var name = "虾米大模王";
+      return {id:id, name: name};
+  } else {
+      return {id: "", name: ""};
+  }
+}
+
+
+
 function fetchJsonByUrl(url, i, callback) {
   var userAgent = "Paw/2.3.1 (Macintosh; OS X/10.12.0) GCDHTTPRequest";
   var urlCache = url;
@@ -145,7 +171,7 @@ function fetchJsonByUrl(url, i, callback) {
 
       var numIdRegx = new RegExp('videoId:\"[a-zA-Z0-9=]*');
       var rs0 = numIdRegx.exec(sres.text);
-
+      console.log("Get video id" + rs0);
       if (rs0 != null && rs0.length > 0) {
           var numId = rs0[0].replace("videoId:\"", "");
           var jsonURL = "http://play.youku.com/play/get.json?vid=" + numId + "&ct=12";
@@ -159,15 +185,17 @@ function fetchJsonByUrl(url, i, callback) {
               var realUrl = url//"http://v.youku.com/v_show/id_" + respone.data.video.encodeid + ".html";
               var videoCode = "<iframe height=498 width=510 src=\'http://player.youku.com/embed/" + respone.data.video.encodeid + "\' frameborder=0 \'allowfullscreen\'></iframe>";
 
-              var authId = "";
-              var authName = "";
               var irTitle = respone.data.video.title;
-              if (irTitle.indexOf("刘哥") > 0) {
-                  authId = "56c04b8518000021009d3766";
-                  authName = "刘哥";
-              } else if (irTitle.indexOf("评头论足") > 0) {
-                  authId = "5743fa2c1700003d00e61f87";
-                  authName = "谢双超";
+              var youkuUserId = respone.data.video.userid;
+              var auth = {};
+              if ( youkuUserId == "4252709") {
+                auth = {id:"5743fa2c1700003d00e61f87", name: "谢双超"};
+              } else if (youkuUserId  == "87726096") {
+                auth = {id:"56c04b8518000021009d3766", name: "刘哥"};
+              } else if ( youkuUserId == "985159227") {
+                auth = {id:"582052a11d00000f00d6ec17", name: "虾米大模王"};
+              } else {
+                auth = {id: "", name: ""}
               }
 
               var jsonObj = {
@@ -178,8 +206,9 @@ function fetchJsonByUrl(url, i, callback) {
                   title: respone.data.video.title,
                   videoCode: videoCode,
                   image: respone.data.video.logo.replace("r1", "r3"),
-                  authId: authId,
-                  authName:  authName
+                  authId: auth.id,
+                  authName:  auth.name,
+                  keywords:  respone.data.video.tags
                 }
               };
               callback(jsonObj, index);
@@ -222,14 +251,9 @@ function fetchJsonByUrl(url, i, callback) {
           }
 
           var realUrl = "http://v.youku.com/v_show/id_" + videoId + ".html";
-          var authId = "";
-          var authName = "";
-          if (irTitle.indexOf("刘哥") > 0) {
-              authId = "56c04b8518000021009d3766";
-              authName = "刘哥";
-          } else if (irTitle.indexOf("评头论足") > 0) {
-              authId = "5743fa2c1700003d00e61f87";
-              authName = "谢双超";
+          var auth = getAuthId(irTitle);
+          if (auth.id == "" && sres.text.indexOf("评头论足") > 0) {
+            auth = {id:"5743fa2c1700003d00e61f87", name: "谢双超"};
           }
 
           var jsonObj = {
@@ -240,8 +264,9 @@ function fetchJsonByUrl(url, i, callback) {
               title: irTitle,
               videoCode: videoCode,
               image: image,
-              authId: authId,
-              authName: authName
+              authId: auth.id,
+              authName: auth.name,
+              tags: "没有(笑!)"
             }
           };
           callback(jsonObj, index);
