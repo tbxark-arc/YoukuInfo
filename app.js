@@ -22,8 +22,6 @@ router.get('/', function(req, res){
   res.send(htmlCode);
 });
 
-
-
 router.post('/showdetail', function(req, res){
   let urls = req.body.urls.split("\n");
   let didSetRes = false;
@@ -69,6 +67,9 @@ router.post('/videoJson', function(req, res){
     res.send(json);
   });
 });
+
+
+
 
 function buildHTMLByJson(json, id) {
   function tableRow(key, value) {
@@ -120,9 +121,7 @@ function buildHTMLByJson(json, id) {
     auth = tableRow(json.data.authName, auth)
     image = tableRow("缩略图", image)
 
-    //
-    //
-    //
+
     let tableContent =  `
       <table class='table' id='${'table' + id}'>
         ${title}
@@ -186,7 +185,6 @@ function getAuthId(title) {
       return {id: "", name: ""};
   }
 }
-
 
 
 function fetchJsonByUrl(url, i, callback) {
